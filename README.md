@@ -1,2 +1,2 @@
 # share
-Share Repository
+This repo contains all the code shared with the community
