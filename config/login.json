@@ -1,0 +1,8 @@
+{
+    "redirect_uri" : "https://myapi.fyers.in/dashboard",
+    "app_id" : "ABCDE12345-999",
+    "secret_id" : "A1B2C3D4E5",
+    "grant_type" : "authorization_code",
+    "response_type" : "code",
+    "state" : "sample"
+}
