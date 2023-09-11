@@ -1,7 +1,7 @@
 from fyers_apiv3 import fyersModel
 import logging
 import sys
-import util.common as util
+import util.config as config
 
 # Logging Config
 logger = logging.getLogger()
@@ -20,12 +20,12 @@ if len(sys.argv) != 2:
     logger.error ("Unable to read auth token! Please provide auth token obtained after login in the form \"python session.py <YOUR_AUTH_CODE>\".")
     sys.exit(0)
 
-auth_token = util.getAuthToken(sys.argv[1])
+auth_token = config.getAuthToken(sys.argv[1])
 if not auth_token:
     logger.error ("Unable to extract auth_token!")
     sys.exit(0)
 
-login_config = util.getLoginConfig()
+login_config = config.getLoginConfig()
 
 if not login_config:
     logger.error ("Unable to extract auth_token!")
@@ -50,5 +50,5 @@ if not "access_token" in response:
     sys.exit(0)
 
 session_config = {"access_token" : response["access_token"]}
-util.putSessionConfig(session_config)
+config.putSessionConfig(session_config)
 logger.info ("Access token fetched and updated successfully.")

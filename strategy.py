@@ -1,7 +1,7 @@
 from fyers_apiv3 import fyersModel
 import logging
 import sys
-import util.common as util
+import util.config as config
 
 # Logging Config
 logger = logging.getLogger()
@@ -16,8 +16,8 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ])
 
-login_config = util.getLoginConfig()
-session_config = util.getSessionConfig()
+login_config = config.getLoginConfig()
+session_config = config.getSessionConfig()
 
 fyers = fyersModel.FyersModel(False, None, login_config["app_id"], session_config["access_token"])
 

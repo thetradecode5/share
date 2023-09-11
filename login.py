@@ -1,7 +1,7 @@
 from fyers_apiv3 import fyersModel
 import logging
 import sys
-import util.common as util
+import util.config as config
 import webbrowser
 
 # Logging Config
@@ -17,7 +17,7 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ])
 
-login_config = util.getLoginConfig()
+login_config = config.getLoginConfig()
 if not login_config:
     logger.error ("Unable to read config data")
 
