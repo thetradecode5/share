@@ -1,0 +1,26 @@
+{
+    "NSE:NIFTY": {
+        "lots": 1,
+        "profit": 300,
+        "loss": 300,
+        "shifts": 5
+    },
+    "NSE:BANKNIFTY" : {
+        "lots": 1,
+        "profit": 300,
+        "loss": 300,
+        "shifts": 5
+    },
+    "NSE:FINNIFTY" : {
+        "lots": 1,
+        "profit": 300,
+        "loss": 300,
+        "shifts": 5
+    },
+    "BSE:SENSEX" : {
+        "lots": 1,
+        "profit": 300,
+        "loss": 300,
+        "shifts": 5
+    }
+}

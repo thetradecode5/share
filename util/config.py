@@ -18,6 +18,7 @@ logging.basicConfig(
 LOGIN_CONFIG = "config/login.json"
 SESSION_CONFIG = "config/session.json"
 STATE_CONFIG = "config/state.json"
+STRATEGY_CONFIG = "config/strategy.json"
 
 def getConfig(config_file):
     config = None
@@ -55,3 +56,6 @@ def getStateConfig():
 
 def putStateConfig(state_config):
     putConfig(STATE_CONFIG, state_config)
+
+def getStrategyConfig():
+    return getConfig(STRATEGY_CONFIG)

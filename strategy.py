@@ -30,8 +30,6 @@ NIFTY_HEDGE_PRICES = [1, 0.5]
 FINNIFTY_HEDGE_PRICES = [1, 0.5]
 SENSEX_HEDGE_PRICES = [3, 1.5]
 
-MAX_ORDERS_PER_BATCH = 20
-
 # Logging Config
 logger = logging.getLogger()
 if logger.handlers:
@@ -63,26 +61,54 @@ date_str = time_obj.strftime("%Y-%m-%d")
 fyers = None
 ce_options = pe_options = None
 todays_prefix = None
+login_config = None
+session_config = None
 state_config = None
+strategy_config = None
 
 def my_handler(event, context):
+    # Get Login Config
+    global login_config
     login_config = config_helper.getLoginConfig()
+    if not login_config or "app_id" not in login_config:
+        logger.error("Cannot find APP ID in login config json file! Exiting...")
+        sys.exit(0)
+
+    # Get Session Config
+    global session_config
     session_config = config_helper.getSessionConfig()
-    
+    if not session_config or "access_token" not in session_config:
+        logger.error("Cannot find ACCESS TOKEN in session config json file! Exiting...")
+        sys.exit(0)
+
+    # Build Fyers Object
     global fyers
     fyers = fyersModel.FyersModel(False, None, login_config["app_id"], session_config["access_token"])
     
+    # Get Options
     getOptions()
     if not todays_prefix:
         logger.info("Cannot find expiry options! Exiting...")
         return
+    
+    # Get Strategy Config
+    global strategy_config
+    strategy_config = config_helper.getStrategyConfig()
+    if not strategy_config or todays_prefix not in strategy_config:
+        logger.error("Cannot find %s related config in strategy json file! Exiting..." % todays_prefix)
+        sys.exit(0)
+    
+    elif not all(attr in strategy_config[todays_prefix] for attr in ["lots", "profit", "loss", "shifts"]):
+        logger.error("Missing attributes in %s related config in strategy json file! Exiting..." % todays_prefix)
+        sys.exit(0)
     
     # Get State
     global state_config
     state_config = config_helper.getStateConfig()
     if not state_config:
         updateStateConfig(pnl = 0, max_profit = 0, re_enter = True)
-    # Check if we are done for the day
+    
+    # Check for latest PNL
     latest_pnl = getLatestPNL()
     if latest_pnl != 0 and int(state_config["pnl"]) != int(latest_pnl):
         updatePNL(latest_pnl)
@@ -95,7 +121,7 @@ def my_handler(event, context):
         if state_config["re_enter"]:
             goShort()
         else:
-            logger.info ("Today's PNL: %s. Not re-entering. We are done for the day!")
+            logger.info ("Today's PNL: %s. Not re-entering. We are done for the day!" % str(state_config["pnl"]))
         
         # monitor positions
         monitor()
@@ -124,7 +150,7 @@ def goShort():
     sell_options_to_enter.append({"name": option_select["call"]["name"], "quantity": lot_size * lots_per_batch, "ordertype": "SELL"})
     sell_options_to_enter.append({"name": option_select["put"]["name"], "quantity": lot_size * lots_per_batch, "ordertype": "SELL"})
 
-    lots = 6
+    lots = int(strategy_config[todays_prefix]["lots"])
     logger.info("Total lots to enter: " + str(lots))
 
     enterInBatches(lots, buy_options_to_enter, sell_options_to_enter)
@@ -316,18 +342,18 @@ def updateStateConfig(**kwargs):
     state_config.update({"last_update" : datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")})
     config_helper.putStateConfig(state_config)
 
-def getMaxLoss():
-    return -6000
-
 def getMaxAllowedOrders(quantity):
     lot_size, lots_per_batch = getLotInfo()
+
+    entry_and_exit_orders = 8
+    max_orders_per_batch = (int(strategy_config[todays_prefix]["shifts"]) * 2) + entry_and_exit_orders
     
     quantity_per_batch = lot_size * lots_per_batch
     number_of_batches = int (abs(quantity) / quantity_per_batch)
     if abs(quantity) % quantity_per_batch != 0:
         number_of_batches += 1
 
-    return number_of_batches * MAX_ORDERS_PER_BATCH
+    return number_of_batches * max_orders_per_batch
 
 def getCompletedOrdersCount():
     completed_orders = 0
@@ -503,19 +529,21 @@ def monitor():
         logger.info ("Max Profit Attained: %s" % str(int(mtm_pnl)))
         updateMaxProfit(mtm_pnl)
 
-    max_loss = getMaxLoss()
+    max_profit = int(strategy_config[todays_prefix]["profit"])
+    max_loss = int(strategy_config[todays_prefix]["loss"]) * -1
     if state_config["max_profit"] >= abs(max_loss)/2:
         max_loss = state_config["max_profit"] / 3
     else:
         max_loss += state_config["max_profit"]
     max_orders = getMaxAllowedOrders(quantity)
     completed_orders = getCompletedOrdersCount()
+    logger.info ("Max Expected Profit: " + str(max_profit))
     logger.info ("Max Allowed Loss: " + str(max_loss))
     logger.info ("Max Allowed Orders: " + str(max_orders))
     logger.info ("Completed Orders: " + str(completed_orders))
 
-    if mtm_pnl < max_loss and canExit():
-        logger.info ("Max Loss breached 1 percent of utilized capital. Exiting all positions")
+    if (mtm_pnl < max_loss or mtm_pnl > max_profit) and canExit():
+        logger.info ("Max Profit/Loss breached. Exiting all positions...!")
         exitAllPositions(open_positions)
 
     # Check if we have to adjust positions
