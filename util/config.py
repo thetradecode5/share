@@ -1,12 +1,32 @@
 import json
+import logging
+import sys
+
+# Logging Config
+logger = logging.getLogger()
+if logger.handlers:
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ])
 
 LOGIN_CONFIG = "config/login.json"
 SESSION_CONFIG = "config/session.json"
+STATE_CONFIG = "config/state.json"
 
 def getConfig(config_file):
     config = None
-    with open(config_file) as config_json:
-        config = json.load(config_json)
+    try:
+        with open(config_file) as config_json:
+            config = json.load(config_json)
+    except Exception as e:
+        logging.error ("Got exception while opening file: %s. Error: %s" % (config_file, str(e)))
+    
     return config
 
 def putConfig(config_file, config):
@@ -30,3 +50,8 @@ def getAuthToken(url):
     auth_token = auth_token[:auth_token.find("&")]
     return auth_token
 
+def getStateConfig():
+    return getConfig(STATE_CONFIG)
+
+def putStateConfig(state_config):
+    putConfig(STATE_CONFIG, state_config)
