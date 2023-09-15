@@ -45,9 +45,9 @@ logging.basicConfig(
 
 prefix_to_index = {
     "NSE:NIFTY" : "NSE:NIFTY50-INDEX",
-    "NSE:BANKNIFTY" : "NIFTYBANK-INDEX",
-    "NSE:FINNIFTY" : "FINNIFTY-INDEX",
-    "BSE:SENSEX" : "SENSEX-INDEX"
+    "NSE:BANKNIFTY" : "NSE:NIFTYBANK-INDEX",
+    "NSE:FINNIFTY" : "NSE:FINNIFTY-INDEX",
+    "BSE:SENSEX" : "BSE:SENSEX-INDEX"
 }
 
 tz = pytz.timezone("Asia/Kolkata")
@@ -293,7 +293,15 @@ def getLotInfo():
 
 def getOptions():
     # Get the option data
-    instruments = symbol_helper.getInstruments()
+    instruments = symbol_helper.getNSEInstruments()
+
+    getTodaysOptions(instruments)
+
+    if not todays_prefix:
+        instruments = symbol_helper.getBSEInstruments()
+        getTodaysOptions(instruments)
+
+def getTodaysOptions(instruments):
     start_of_day = datetime.datetime.combine(datetime.datetime.now(), datetime.time.min).timestamp()
     end_of_day = datetime.datetime.combine(datetime.datetime.now(), datetime.time.max).timestamp()
 
@@ -301,7 +309,7 @@ def getOptions():
     for prefix, index_name in prefix_to_index.items():
         options = [{"name" : a["symbol_ticker"], "expiry" : int(a["expiry_date"]), "tok" : a["fytoken"], "strike" : int(float(a["strike_price"])), "lotsize" : int(a["minimum_lot_size"])} 
                                 for a in instruments if a["symbol_ticker"].startswith(prefix) and 
-                                (a["symbol_ticker"].endswith("CE") or a["symbol_ticker"].endswith("PE")) and a["tick_size"] == "0.05" and a["exchange"] in ["10"]]
+                                (a["symbol_ticker"].endswith("CE") or a["symbol_ticker"].endswith("PE")) and a["tick_size"] == "0.05" and a["exchange"] in ["10", "12"]]
     
         
         ce_options = sorted([a for a in options if a["name"].endswith("CE") and a["expiry"] > start_of_day and a["expiry"] < end_of_day], key = lambda k: k["strike"])

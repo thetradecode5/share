@@ -17,8 +17,24 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ])
 
-def getInstruments():
+def getNSEInstruments():
     response = requests.get("https://public.fyers.in/sym_details/NSE_FO.csv", allow_redirects=True)
+    
+    if response.status_code == 200:
+        return list(csv.DictReader(response.content.decode('utf-8').splitlines(), 
+                                   skipinitialspace=True, 
+                                   fieldnames=["fytoken", "symbol_details", "exchange_instrument_type",
+                                               "minimum_lot_size", "tick_size", "isin", "trading_session",
+                                               "last_update_date", "expiry_date", "symbol_ticker",
+                                               "exchange", "segment", "scrip_code", "underlying_scrip_code",
+                                               "underlying_exchange_token", "strike_price", "option_type", "underlying_fytoken"]))
+    else:
+        logger.info ("Instruments fetch failed. Response: " + str(response))
+    
+    return []
+
+def getBSEInstruments():
+    response = requests.get("https://public.fyers.in/sym_details/BSE_FO.csv", allow_redirects=True)
     
     if response.status_code == 200:
         return list(csv.DictReader(response.content.decode('utf-8').splitlines(), 
