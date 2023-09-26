@@ -180,6 +180,20 @@ def getOptionToSell():
             put = b
             break
 
+    if call["name"] in call_quotes and put["name"] in put_quotes:             
+        call_quote = call_quotes[call["name"]]
+        put_quote = put_quotes[put["name"]]
+
+        if call_quote > put_quote:
+            for a in ce_options:
+                if a["strike"] > indexQuote + (buffer * 0.5) and a["name"] in call_quotes and call_quotes[a["name"]] > put_quote:
+                    call = a
+        
+        elif put_quote > call_quote:
+            for b in reversed(pe_options):
+                if b["strike"] < indexQuote - (buffer * 0.5) and b["name"] in put_quotes and put_quotes[b["name"]] > call_quote:
+                    put = b
+
     call_hedges = [a for a in ce_options if a["strike"] > indexQuote + buffer and 
                     a["name"] in call_quotes and 
                     call_quotes[a["name"]] < hedge_high and 
@@ -294,6 +308,9 @@ def getLotInfo():
 def getOptions():
     # Get the option data
     instruments = symbol_helper.getNSEInstruments()
+    if not len(instruments):
+        logger.error ("Cannot fetch options data..!")
+        return
 
     getTodaysOptions(instruments)
 
