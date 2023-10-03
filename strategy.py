@@ -171,12 +171,12 @@ def getOptionToSell():
     call = None
     put = None
     for a in ce_options:
-        if a["strike"] > indexQuote + (buffer * 0.5):
+        if a["strike"] > indexQuote + (buffer * 1):
             call = a
             break
     
     for b in reversed(pe_options):
-        if b["strike"] < indexQuote - (buffer * 0.5):
+        if b["strike"] < indexQuote - (buffer * 1):
             put = b
             break
 
@@ -186,12 +186,12 @@ def getOptionToSell():
 
         if call_quote > put_quote:
             for a in ce_options:
-                if a["strike"] > indexQuote + (buffer * 0.5) and a["name"] in call_quotes and call_quotes[a["name"]] > put_quote:
+                if a["strike"] > indexQuote + (buffer * 1) and a["name"] in call_quotes and call_quotes[a["name"]] > put_quote:
                     call = a
         
         elif put_quote > call_quote:
             for b in reversed(pe_options):
-                if b["strike"] < indexQuote - (buffer * 0.5) and b["name"] in put_quotes and put_quotes[b["name"]] > call_quote:
+                if b["strike"] < indexQuote - (buffer * 1) and b["name"] in put_quotes and put_quotes[b["name"]] > call_quote:
                     put = b
 
     call_hedges = [a for a in ce_options if a["strike"] > indexQuote + buffer and 
@@ -433,6 +433,7 @@ def exitAllPositions(open_positions):
     
     exitInBatches(number_of_batches, sell_options_to_exit, buy_options_to_exit, lot_size, lots_per_batch)
 
+    time.sleep(3)
     latest_pnl = getLatestPNL()
     if latest_pnl != 0 and int(state_config["pnl"]) != int(latest_pnl):
         updatePNL(latest_pnl)
@@ -563,7 +564,7 @@ def monitor():
     max_orders = getMaxAllowedOrders(quantity)
     completed_orders = getCompletedOrdersCount()
     logger.info ("Max Expected Profit: " + str(max_profit))
-    logger.info ("Max Allowed Loss: " + str(max_loss))
+    logger.info ("Max Allowed Loss: " + str(symbol_helper.tradeRound(max_loss)))
     logger.info ("Max Allowed Orders: " + str(max_orders))
     logger.info ("Completed Orders: " + str(completed_orders))
 
